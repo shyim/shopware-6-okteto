@@ -1,0 +1,19 @@
+name: shopware
+image: shopware/development
+command: ["bash"]
+mountpath: "/app"
+forward:
+    - 8080:8080
+reverse:
+    - 9000:9000
+resources:
+    limits:
+        memory: "2Gi"
+        cpu: "1000m"
+services:
+    - name: mysql
+      image: mysql:5.7
+    - name: nginx
+      mountpath: "/var/www/html"
+      environment:
+          - HTTPS=on

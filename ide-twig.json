@@ -1,0 +1,16 @@
+{
+  "namespaces": [
+    {
+      "namespace": "Storefront",
+      "path": "platform/src/Storefront/Resources/views"
+    },
+    {
+      "namespace": "Administration",
+      "path": "platform/src/Administration/Resources/views"
+    },
+    {
+      "namespace": "Framework",
+      "path": "platform/src/Framework/Resources/views"
+    }
+  ]
+}

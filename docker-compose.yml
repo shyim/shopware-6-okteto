@@ -1,0 +1,47 @@
+version: '3.7'
+
+services:
+  app_server:
+    image: shopware/development:latest
+    links:
+      - app_mysql:mysql
+      - mailhog:mailhog
+    extra_hosts:
+      - "docker.vm:127.0.0.1"
+    volumes:
+      - ~/.composer:/.composer
+    tmpfs:
+      - /tmp:mode=1777
+
+  app_mysql:
+    build: dev-ops/docker/containers/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_USER: app
+      MYSQL_PASSWORD: app
+
+  app_cypress:
+    image: cypress/browsers:node10.11.0-chrome75
+    tty: true
+    links:
+      - app_server:docker.vm
+    environment:
+      - CYPRESS_baseUrl=http://docker.vm:8000
+    volumes:
+      - .:/app
+      - ./platform/src/Administration/Resources/app/administration/test/e2e:/e2e-Administration
+      - ./platform/src/Storefront/Resources/app/storefront/test/e2e:/e2e-Storefront
+
+  mailhog:
+    image: mailhog/mailhog
+
+  adminer:
+    image: adminer:latest
+    links:
+      - app_mysql:mysql
+
+  elasticsearch:
+    image: elastic/elasticsearch:7.1.1
+    environment:
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - discovery.type=single-node

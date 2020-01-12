@@ -1,0 +1,96 @@
+#!/usr/bin/env php
+<?php declare(strict_types=1);
+
+if (!file_exists(__DIR__ . '/vendor/autoload.php')) {
+    exec('composer install --working-dir=' . __DIR__);
+}
+
+require __DIR__ . '/vendor/autoload.php';
+
+use Symfony\Component\Console\Application;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
+use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Style\SymfonyStyle;
+use Symfony\Component\Process\Process;
+
+(new Application('setup', '1.0.0'))
+    ->register('setup')
+    ->addOption('force', 'f', InputOption::VALUE_NONE, 'Force setup')
+    ->setCode(function (InputInterface $input, OutputInterface $output) {
+
+        function createEnvFile(SymfonyStyle $io, array $configuration): void
+        {
+            $psh = 'const:' . PHP_EOL;
+
+            foreach ($configuration as $key => $value) {
+                $psh .= '  ' . $key . ': "' . $value . '"' . PHP_EOL;
+            }
+
+            file_put_contents(__DIR__ . '/../.psh.yaml.override', $psh);
+
+            $process = new Process('php psh.phar install');
+            $process->setTimeout(0);
+            $process->setWorkingDirectory(__DIR__ . '/../');
+            $process->start();
+
+            foreach ($process as $line) {
+                $io->write($line);
+            }
+        }
+
+        $configuration = [];
+        $emptyValidation = function ($value) {
+            if (trim((string) $value) === '') {
+                throw new \RuntimeException('This value is required.');
+            }
+
+            return $value;
+        };
+
+        $io = new SymfonyStyle($input, $output);
+
+        $io->title('Shopware setup process');
+        $io->text('This tool will setup your instance.');
+
+        if (!$input->getOption('force') && file_exists(__DIR__ . '/../.psh.yaml.override')) {
+            $io->comment('Instance has already been set-up. To start over, please delete your .psh.yaml.override file.');
+            return;
+        }
+
+        $io->section('Application information');
+        $configuration['APP_ENV'] = $io->choice('Application environment', ['prod', 'dev'], 'dev');
+        $configuration['APP_URL'] = $io->ask('URL to your /public folder', 'http://shopware.local', function ($value) {
+            $value = trim($value);
+
+            if ($value === '') {
+                throw new \RuntimeException('Shop URL is required.');
+            }
+
+            if (!filter_var($value, FILTER_VALIDATE_URL)) {
+                throw new \RuntimeException('Invalid URL.');
+            }
+
+            return $value;
+        });
+
+        $io->section('Database information');
+        $configuration['DB_HOST'] = $io->ask('Database host', 'localhost', $emptyValidation);
+        $configuration['DB_PORT'] = $io->ask('Database port', 3306, $emptyValidation);
+        $configuration['DB_NAME'] = $io->ask('Database name', 'shopware', $emptyValidation);
+        $configuration['DB_USER'] = $io->ask('Database user', 'app', $emptyValidation);
+        $configuration['DB_PASSWORD'] = $io->askHidden('Database password');
+
+        $io->note('Checking database credentials');
+        $connection = new PDO(
+                sprintf('mysql:host=%s;port=%d', $configuration['DB_HOST'], $configuration['DB_PORT']),
+                $configuration['DB_USER'],
+                $configuration['DB_PASSWORD']
+        );
+
+        $io->note('Running post installation tasks');
+        createEnvFile($io, $configuration);
+    })
+    ->getApplication()
+    ->setDefaultCommand('setup', true)
+    ->run();

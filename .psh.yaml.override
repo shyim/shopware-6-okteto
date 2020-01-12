@@ -1,0 +1,11 @@
+const:
+  DB_USER: "root"
+  DB_PASSWORD: "app"
+  DB_HOST: "mysql"
+  DB_PORT: "3306"
+  DB_NAME: "shopware"
+  APP_URL: "https://nginx-shyim.cloud.okteto.net"
+  APP_ENV: "dev"
+  APP_MAILER_URL: "smtp://mailhog:1025"
+  SHOPWARE_ES_HOSTS: "elasticsearch:9200"
+  DEVPORT: "8080"
