@@ -1,7 +1,10 @@
 name: shopware
-image: shopware/development
+image: shyim/shopware-cli:php74
 command: ["bash"]
-mountpath: "/app"
+mountpath: "/var/www/html"
+securityContext:
+    runAsUser: 1000
+    runAsGroup: 1000
 forward:
     - 8080:8080
 reverse:
