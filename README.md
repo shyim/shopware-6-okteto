@@ -2,7 +2,7 @@
 
 ## Installation
 
-* Create a free account at https://okteto.com/
+* Create a free account at https://okteto.com/ or use your own minikube / k8s
 * Install okteto cli / kubectl
 * Create ``mysql.yml`` and ``nginx.yml`` using ``kubectl create -f mysql.yml -f nginx.yml``
 * Copy the given nginx url from Dashboard and adjust it in ``.psh.yaml.override``
